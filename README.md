@@ -16,6 +16,7 @@ If you want to use wget to download my script, try this:
 
         wget -O YNAB4_LinuxInstall.pl https://raw.github.com/WolverineFan/YNABLinuxInstall/master/YNAB4_LinuxInstall.pl
 
+Alternatively, in your browser, right-click this link and Save Link As: https://raw.github.com/WolverineFan/YNABLinuxInstall/master/YNAB4_LinuxInstall.pl
 
 Install WINE and Dropbox first. NOTE: Be sure to launch Dropbox, register, and complete the setup process. You should have a "Dropbox" folder in your home directory after it's done.
 
