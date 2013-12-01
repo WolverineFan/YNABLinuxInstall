@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use LWP::Simple;
 
 # This script is released to the public domain.
 
@@ -67,8 +68,25 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
     &find_installers($search_path, \@installers);
     last if @installers;
   }
+  
   if (!@installers) {
-    mydie("Unable to find YNAB4 installer\n");
+    $YNAB_WINDOWS = '';
+    while (!$YNAB_WINDOWS) {
+      print "Unable to find YNAB4 installer\n";
+      print "What would you like to do?\n";
+      print "  1. Download the latest version of YNAB4\n";
+      print "  2. Quit\n";
+      print "Select an action: [1] ";
+      my $ans = <STDIN>;
+      my ($num) = ($ans =~ /(\d+)/);
+      $num = 1 if $ans =~ /^\s*$/;
+      if ($num == 1) {
+        $YNAB_WINDOWS = &download_latest_version;
+      }
+      if ($num == 2) {
+        mydie("Received quit signal");
+      }
+    }
   }
   if (@installers == 1) {
     $YNAB_WINDOWS = $installers[0];
@@ -78,6 +96,7 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
     $YNAB_WINDOWS = '';
     while (!$YNAB_WINDOWS) {
       print "\nAvailable Installers:\n";
+      print $YNAB_WINDOWS;
       @installers = reverse(@installers);
       for (my $i = 0; $i < @installers; $i++) {
         print "  " . $i+1 . ". " . $installers[$i] . "\n";
@@ -266,4 +285,21 @@ sub recursive_find_installers ($\@) {
       push @$found, $path;
     }
   }
+}
+
+sub check_latest_version {
+    my $download_page = get('http://www.youneedabudget.com/download') or die 'Unable to get page';
+    if ($download_page =~ /(<p><strong><a href=")(.+)(" class="desktop-download">Version )(.+)( for Windows)/ or die 'Unable to match regex') {
+        return ($2, $4);
+    }
+}
+
+sub download_latest_version {
+    print "\nDownloading latest version of YNAB4...\n";
+    my ($file_url, $latest_version) = &check_latest_version;
+    my $file_prefix = "/tmp/YNAB 4_";
+    my $file_suffix = "_Setup.exe";
+    my $file_path = $file_prefix . $latest_version . $file_suffix;
+    getstore($file_url, $file_path);
+    return $file_path;
 }
