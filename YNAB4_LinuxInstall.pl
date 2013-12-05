@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use LWP::Simple;
 
 # This script is released to the public domain.
 
@@ -33,7 +32,7 @@ mydie "This script requires the Perl MIME::Base64 module to work, which you seem
 my $WINE = '/usr/bin/wine';
 mydie "\nYNAB 4 requires WINE to work, please install WINE and try again\n" unless -x $WINE;
 
-# Take a(n optional) argument to be a YNAB windows installer
+# Take an (optional) argument to be a YNAB windows installer
 my $YNAB_WINDOWS = $ARGV[0];
 my $INSTALL_MODE = 'YNAB';
 
@@ -41,8 +40,9 @@ my $INSTALL_MODE = 'YNAB';
 unless ($YNAB_WINDOWS && -s $YNAB_WINDOWS) {
   print <<"END_MESSAGE";
 Would you like to:
-1. Install YNAB4 and link Dropbox
+1. Install YNAB4 from a downloaded installer and link Dropbox
 2. Link Dropbox ONLY
+3. Download the latest version of YNAB4, install it, and link Dropbox
 END_MESSAGE
   ;
   print "Select an option: [1] ";
@@ -53,8 +53,11 @@ END_MESSAGE
   if ($num == 1) {
     $INSTALL_MODE = 'YNAB';
   }
-  else {
+  elsif ($num == 2) {
     $INSTALL_MODE = 'DROPBOX';
+  }
+  else {
+    $INSTALL_MODE = 'DOWNLOAD';
   }
 }
 
@@ -80,23 +83,8 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
   }
   
   if (!@installers) {
-    $YNAB_WINDOWS = '';
-    while (!$YNAB_WINDOWS) {
-      print "Unable to find YNAB4 installer\n";
-      print "What would you like to do?\n";
-      print "  1. Download the latest version of YNAB4\n";
-      print "  2. Quit\n";
-      print "Select an action: [1] ";
-      my $ans = <STDIN>;
-      my ($num) = ($ans =~ /(\d+)/);
-      $num = 1 if $ans =~ /^\s*$/;
-      if ($num == 1) {
-        $YNAB_WINDOWS = &download_latest_version;
-      }
-      if ($num == 2) {
-        mydie("Received quit signal");
-      }
-    }
+    # If no installers are found, quit
+    mydie("Unable to find YNAB4 installer\n");
   }
   if (@installers == 1) {
     # If one (1) installer is found, use that
@@ -108,7 +96,6 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
     while (!$YNAB_WINDOWS) {
       # If multiple installers are found, list them
       print "\nAvailable Installers:\n";
-      print $YNAB_WINDOWS;
       @installers = reverse(@installers);
       for (my $i = 0; $i < @installers; $i++) {
         print "  " . $i+1 . ". " . $installers[$i] . "\n";
@@ -132,6 +119,22 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
 # The user is trying to install YNAB, but something has gone wrong
 if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
   mydie "\nNo YNAB4 Installer found!\n";
+}
+
+if ($INSTALL_MODE eq 'DOWNLOAD') {
+  eval("use LWP::Simple");
+  if ($@) {
+    print "\nLWP not found\n";
+  }
+  else {
+    print "\nDownloading most current version of YNAB4...\n";
+    my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
+    my $RELEASE_NOTES = "https://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/releaseNotesData.js";
+    my $RELEASE_NOTES_DATA = get($RELEASE_NOTES);
+    $RELEASE_NOTES_DATA =~ /("downloadUrl": ")(.*)(",)/;
+    getstore($2, $DOWNLOAD_LOCATION);
+    $YNAB_WINDOWS = $DOWNLOAD_LOCATION;
+  }
 }
 
 # Get started by opening the dropbox configuration
@@ -213,7 +216,7 @@ $WINEDIR = $input if $input !~ /^\s*$/;
 my $WINE_DRIVEC_DIR = "$WINEDIR/drive_c";
 my $WINE_APPDATA_DIR = "$WINE_DRIVEC_DIR/users/$ENV{USER}/Application\ Data";
 
-if ($INSTALL_MODE eq 'YNAB') {
+if ($INSTALL_MODE eq 'YNAB' || $INSTALL_MODE eq 'DOWNLOAD') {
   # Create the winedir, unless it already exists
   # Might need to use $ENV{LOGNAME} here?
   system('mkdir', '-p', "$WINEDIR");
@@ -320,21 +323,4 @@ sub recursive_find_installers ($\@) {
       push @$found, $path;
     }
   }
-}
-
-sub check_latest_version {
-    my $download_page = get('http://www.youneedabudget.com/download') or die 'Unable to get page';
-    if ($download_page =~ /(<p><strong><a href=")(.+)(" class="desktop-download">Version )(.+)( for Windows)/ or die 'Unable to match regex') {
-        return ($2, $4);
-    }
-}
-
-sub download_latest_version {
-    print "\nDownloading latest version of YNAB4...\n";
-    my ($file_url, $latest_version) = &check_latest_version;
-    my $file_prefix = "/tmp/YNAB 4_";
-    my $file_suffix = "_Setup.exe";
-    my $file_path = $file_prefix . $latest_version . $file_suffix;
-    getstore($file_url, $file_path);
-    return $file_path;
 }
