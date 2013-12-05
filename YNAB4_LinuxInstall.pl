@@ -122,14 +122,29 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
 }
 
 if ($INSTALL_MODE eq 'DOWNLOAD') {
-  eval("use LWP::Simple");
+  my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
+  my $RELEASE_NOTES = "https://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/releaseNotesData.js";
+  eval("use LWP::Simple;");
   if ($@) {
-    print "\nLWP not found\n";
+    my $WGET = '/usr/bin/wget';
+    if (!-x $WGET) {
+      my $CURL = '/usr/bin/curl';
+      if (!-x $CURL) {
+        print "\ncurl not found\n";
+      }
+      else {
+        # curl download the file
+      }
+    }
+    else {
+      print "\nDownloading most current version of YNAB4...\n";
+      my $RELEASE_NOTES_DATA = `wget $RELEASE_NOTES`;
+      $RELEASE_NOTES_DATA =~ /("downloadUrl": ")(.*)(",)/;
+      print $2;
+    }
   }
   else {
     print "\nDownloading most current version of YNAB4...\n";
-    my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
-    my $RELEASE_NOTES = "https://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/releaseNotesData.js";
     my $RELEASE_NOTES_DATA = get($RELEASE_NOTES);
     $RELEASE_NOTES_DATA =~ /("downloadUrl": ")(.*)(",)/;
     getstore($2, $DOWNLOAD_LOCATION);
