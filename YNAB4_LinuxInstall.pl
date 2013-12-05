@@ -75,7 +75,7 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
                       $ENV{HOME} . "/Dropbox",
                       $ENV{HOME},
                      );
-  # search through each of the paths for an installer
+  # Search through each of the paths for an installer
   foreach my $search_path (@search_paths) {
     print "Searching in $search_path\n";
     &find_installers($search_path, \@installers);
@@ -123,14 +123,15 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
 
 if ($INSTALL_MODE eq 'DOWNLOAD') {
   my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
-  my $RELEASE_NOTES = "https://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/releaseNotesData.js";
+  my $UPDATE_LOCATION = "/tmp/ynab4_update.xml";
+  my $UPDATE = "http://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/update.xml";
   eval("use LWP::Simple;");
   if ($@) {
     my $WGET = '/usr/bin/wget';
     if (!-x $WGET) {
       my $CURL = '/usr/bin/curl';
       if (!-x $CURL) {
-        print "\ncurl not found\n";
+        mydie "curl not found\n";
       }
       else {
         # curl download the file
@@ -138,16 +139,17 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
     }
     else {
       print "\nDownloading most current version of YNAB4...\n";
-      my $RELEASE_NOTES_DATA = `wget $RELEASE_NOTES`;
-      $RELEASE_NOTES_DATA =~ /("downloadUrl": ")(.*)(",)/;
-      print $2;
+      my $UPDATE_DATA = `wget -O $UPDATE_LOCATION $UPDATE`;
+      $UPDATE_DATA =~ /(<url>)(.*)(<\/url>)/;
+      `wget -O $DOWNLOAD_LOCATION $1`;
     }
   }
   else {
     print "\nDownloading most current version of YNAB4...\n";
-    my $RELEASE_NOTES_DATA = get($RELEASE_NOTES);
-    $RELEASE_NOTES_DATA =~ /("downloadUrl": ")(.*)(",)/;
-    getstore($2, $DOWNLOAD_LOCATION);
+    my $UPDATE_DATA = get($UPDATE);
+    $UPDATE_DATA =~ /(<url>)(.*)(<\/url>)/;
+    my $INSTALLER_URL = $2;
+    getstore($INSTALLER_URL, $DOWNLOAD_LOCATION);
     $YNAB_WINDOWS = $DOWNLOAD_LOCATION;
   }
 }
