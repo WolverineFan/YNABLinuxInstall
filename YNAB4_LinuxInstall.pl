@@ -348,7 +348,7 @@ sub recursive_find_installers ($\@) {
 
 sub validate_download ($\@) {
   my ($GOOD_MD5, $FILE_DOWNLOAD) = @_;
-  print "\nValidating downloaded installer...\n";
+  print "\nValidating installer...\n";
   my $CALC_MD5 = `md5sum $FILE_DOWNLOAD`;
   if ($CALC_MD5 eq $GOOD_MD5) {
     $YNAB_WINDOWS = $FILE_DOWNLOAD;
