@@ -128,7 +128,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
   my $UPDATE_LOCATION = "/tmp/ynab4_update.xml";
   eval("use LWP::Simple;");
   if ($@) {
-    my $WGET = '/usr/bin/wget';
+    my $WGET = '/usr/bin/wget-that-does-not-exist';
     if (-x $WGET) {
       system($WGET, '-O', $UPDATE_LOCATION, $UPDATE_PAGE);
       my $UPDATE_DATA = &save_release_notes_data($UPDATE_LOCATION);
@@ -139,7 +139,11 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
     else {
       my $CURL = '/usr/bin/curl';
       if (-x $CURL) {
-        # curl download the file
+        system($CURL, '-o', $UPDATE_LOCATION, $UPDATE_PAGE);
+        my $UPDATE_DATA = &save_release_notes_data($UPDATE_LOCATION);
+        my ($INSTALLER_URL, $GIVEN_MD5) = &find_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+        system($CURL, '-o', $DOWNLOAD_LOCATION, $INSTALLER_URL);
+        &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
       }
       else {
         mydie "It looks like you don't have anything installed
