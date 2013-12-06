@@ -128,7 +128,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
   my $UPDATE_LOCATION = "/tmp/ynab4_update.xml";
   eval("use LWP::Simple;");
   if ($@) {
-    my $WGET = '/usr/bin/wget-that-does-not-exist';
+    my $WGET = '/usr/bin/wget';
     if (-x $WGET) {
       system($WGET, '-O', $UPDATE_LOCATION, $UPDATE_PAGE);
       my $UPDATE_DATA = &save_release_notes_data($UPDATE_LOCATION);
