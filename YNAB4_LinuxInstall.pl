@@ -122,6 +122,7 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
 }
 
 if ($INSTALL_MODE eq 'DOWNLOAD') {
+  print "\nDownloading the most current version of YNAB4...\n";
   my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
   my $UPDATE_LOCATION = "/tmp/ynab4_update.xml";
   my $UPDATE = "http://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/update.xml";
@@ -138,16 +139,12 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
       }
     }
     else {
-      print "\nDownloading most current version of YNAB4...\n";
-      my $UPDATE_DATA = `wget -O $UPDATE_LOCATION $UPDATE`;
-      $UPDATE_DATA =~ /(<url>)(.*)(<\/url>)/;
-      `wget -O $DOWNLOAD_LOCATION $1`;
+      # wget the file
     }
   }
   else {
-    print "\nDownloading most current version of YNAB4...\n";
     my $UPDATE_DATA = get($UPDATE);
-    $UPDATE_DATA =~ /(<url>)(.*)(<\/url>)/;
+    $UPDATE_DATA =~ /(<url>)(.*)(<\/url>)\n(<md5>)(.*)(<\/md5>)/;
     my $INSTALLER_URL = $2;
     getstore($INSTALLER_URL, $DOWNLOAD_LOCATION);
     $YNAB_WINDOWS = $DOWNLOAD_LOCATION;
