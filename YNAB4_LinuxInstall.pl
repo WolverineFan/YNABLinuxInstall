@@ -123,29 +123,44 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
 
 if ($INSTALL_MODE eq 'DOWNLOAD') {
   print "\nDownloading the most current version of YNAB4...\n";
+  # Setting some variables to use through the various download options
   my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
   my $UPDATE_PAGE = "http://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/update.xml";
   my $UPDATE_LOCATION = "/tmp/ynab4_update.xml";
+  # Check to see if the LWP::Simple perl module is installed
   eval("use LWP::Simple;");
   if ($@) {
-    my $WGET = '/usr/bin/wget';
+    # If LWP::Simple is not installed, let's try wget
+    my $WGET = '/usr/bin/wget-false';
     if (-x $WGET) {
+      # If wget is installed, let's download the update page,
       system($WGET, '-O', $UPDATE_LOCATION, $UPDATE_PAGE);
       my $UPDATE_DATA = &save_release_notes_data($UPDATE_LOCATION);
+      # look through the xml to find the download url and md5sum,
       my ($INSTALLER_URL, $GIVEN_MD5) = &find_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+      # download the installer,
       system($WGET, '-O', $DOWNLOAD_LOCATION, $INSTALLER_URL);
+      # and check to make sure that the file we downloaded matches the md5 that YNAB gave us
       &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
     }
     else {
+      # If wget is not installed, let's try curl
       my $CURL = '/usr/bin/curl';
       if (-x $CURL) {
+        # If curl is installed, let's download the update page,
         system($CURL, '-o', $UPDATE_LOCATION, $UPDATE_PAGE);
         my $UPDATE_DATA = &save_release_notes_data($UPDATE_LOCATION);
+        # look through the xml to find the download url and md5sum,
         my ($INSTALLER_URL, $GIVEN_MD5) = &find_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+        # download the installer,
         system($CURL, '-o', $DOWNLOAD_LOCATION, $INSTALLER_URL);
+        # and check to make sure that the file we downloaded matches the md5 that YNAB gave us
         &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
       }
       else {
+        # If LWP::Simple, wget, and curl are all NOT installed, I don't know how
+        # else we could try to download the file, ask the user to download it
+        # on their own and come back to us.
         mydie "It looks like you don't have anything installed
                that we can use to download the latest version of YNAB4.
                Please download the Windows installer from here:\n\n
@@ -155,9 +170,13 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
     }
   }
   else {
+    # LWP::Simple is installed, let's download the update page,
     my $UPDATE_DATA = get($UPDATE_PAGE);
+    # look through the xml to find the download url and md5sum,
     my ($INSTALLER_URL, $GIVEN_MD5) = &find_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+    # download the installer,
     getstore($INSTALLER_URL, $DOWNLOAD_LOCATION);
+    # and check to make sure that the file we downloaded matches the md5 that YNAB gave us
     &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
   }
 }
@@ -350,33 +369,44 @@ sub recursive_find_installers ($\@) {
   }
 }
 
-sub validate_download ($\@) {
-  my ($GOOD_MD5, $FILE_DOWNLOAD) = @_;
-  print "\nValidating installer...\n";
-  my $CALC_MD5 = `md5sum $FILE_DOWNLOAD`;
-  if ($CALC_MD5 eq $GOOD_MD5) {
-    $YNAB_WINDOWS = $FILE_DOWNLOAD;
-  }
-  else {
-    mydie "Could not validate downloaded file. Please try again.";
-  }
-}
-
-sub find_url_and_md5 ($\@) {
-  my ($DATA, $FILE_LOCATION) = @_;
-  $DATA =~ /<url>(.*)<\/url>/g;
-  my $URL = $1;
-  $DATA =~ /<md5>(.*)<\/md5>/g;
-  my $MD5SUM = lc $1 . '  ' . $FILE_LOCATION . "\n";
-  return ($URL, $MD5SUM);
-}
-
 sub save_release_notes_data ($) {
   local $/ = undef;
+  # Get the location of the update file that was provided, and store it as DATA
   my $UPDATE_LOCATION = $_[0];
   open DATA, $UPDATE_LOCATION or die "Couldn't open file: $!";
   binmode DATA;
+  # Read from <DATA> and store it as a string: $UPDATE_DATA and return
   my $UPDATE_DATA = <DATA>;
   close DATA;
   return $UPDATE_DATA;
+}
+
+sub find_url_and_md5 ($\@) {
+  # Get the update information and name of the download file
+  my ($DATA, $FILE_LOCATION) = @_;
+  $DATA =~ /<url>(.*)<\/url>/g;
+  # Find the installer URL
+  my $URL = $1;
+  $DATA =~ /<md5>(.*)<\/md5>/g;
+  # Find the MD5 and store it just like the system program `md5sum` outputs
+  my $MD5SUM = lc $1 . '  ' . $FILE_LOCATION . "\n";
+  # Return both
+  return ($URL, $MD5SUM);
+}
+
+sub validate_download ($\@) {
+  # Grab the MD5 we got from upstream, and the location of the downloaded file
+  my ($GOOD_MD5, $FILE_DOWNLOAD) = @_;
+  print "\nValidating installer...\n";
+  # Generate the MD5 hash of the file that was downloaded
+  my $CALC_MD5 = `md5sum $FILE_DOWNLOAD`;
+  if ($CALC_MD5 eq $GOOD_MD5) {
+    # If the MD5 is good, save the location as our windows installer
+    $YNAB_WINDOWS = $FILE_DOWNLOAD;
+  }
+  else {
+    # Otherwise, something went wrong.
+    # Quit the script and instruct the user to try again.
+    mydie "Could not validate downloaded file. Please try again.";
+  }
 }
