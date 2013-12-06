@@ -122,10 +122,11 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
 }
 
 if ($INSTALL_MODE eq 'DOWNLOAD') {
+  use Digest::MD5 qw( md5 );
   print "\nDownloading the most current version of YNAB4...\n";
   my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
   my $UPDATE_LOCATION = "/tmp/ynab4_update.xml";
-  my $UPDATE = "http://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/update.xml";
+  my $UPDATE_PAGE = "http://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/update.xml";
   eval("use LWP::Simple;");
   if ($@) {
     my $WGET = '/usr/bin/wget';
@@ -143,11 +144,20 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
     }
   }
   else {
-    my $UPDATE_DATA = get($UPDATE);
-    $UPDATE_DATA =~ /(<url>)(.*)(<\/url>)\n(<md5>)(.*)(<\/md5>)/;
-    my $INSTALLER_URL = $2;
+    my $UPDATE_DATA = get($UPDATE_PAGE);
+    $UPDATE_DATA =~ /<url>(.*)<\/url>/g;
+    my $INSTALLER_URL = $1;
+    $UPDATE_DATA =~ /<md5>(.*)<\/md5>/g;
+    my $GIVEN_MD5 = lc $1 . '  ' . $DOWNLOAD_LOCATION . "\n";
     getstore($INSTALLER_URL, $DOWNLOAD_LOCATION);
-    $YNAB_WINDOWS = $DOWNLOAD_LOCATION;
+    print "\nValidating downloaded installer...\n";
+    my $CALC_MD5 = `md5sum $DOWNLOAD_LOCATION`;
+    if ($CALC_MD5 eq $GIVEN_MD5) {
+      $YNAB_WINDOWS = $DOWNLOAD_LOCATION;
+    }
+    else {
+      mydie "Could not validate downloaded file. Please try again";
+    }
   }
 }
 
