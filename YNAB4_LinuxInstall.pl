@@ -131,7 +131,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
   eval("use LWP::Simple;");
   if ($@) {
     # If LWP::Simple is not installed, let's try wget
-    my $WGET = '/usr/bin/wget-false';
+    my $WGET = '/usr/bin/wget';
     if (-x $WGET) {
       # If wget is installed, let's download the update page,
       system($WGET, '-O', $UPDATE_LOCATION, $UPDATE_PAGE);
