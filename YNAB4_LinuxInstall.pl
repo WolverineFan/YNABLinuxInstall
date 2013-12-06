@@ -135,7 +135,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
     if (-x $WGET) {
       # If wget is installed, let's download the update page,
       system($WGET, '-O', $UPDATE_LOCATION, $UPDATE_PAGE);
-      my $UPDATE_DATA = &save_release_notes_data($UPDATE_LOCATION);
+      my $UPDATE_DATA = &save_file_data($UPDATE_LOCATION);
       # look through the xml to find the download url and md5sum,
       my ($INSTALLER_URL, $GIVEN_MD5) = &find_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
       # download the installer,
@@ -149,7 +149,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
       if (-x $CURL) {
         # If curl is installed, let's download the update page,
         system($CURL, '-o', $UPDATE_LOCATION, $UPDATE_PAGE);
-        my $UPDATE_DATA = &save_release_notes_data($UPDATE_LOCATION);
+        my $UPDATE_DATA = &save_file_data($UPDATE_LOCATION);
         # look through the xml to find the download url and md5sum,
         my ($INSTALLER_URL, $GIVEN_MD5) = &find_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
         # download the installer,
@@ -369,7 +369,7 @@ sub recursive_find_installers ($\@) {
   }
 }
 
-sub save_release_notes_data ($) {
+sub save_file_data ($) {
   local $/ = undef;
   # Get the location of the update file that was provided, and store it as DATA
   my $UPDATE_LOCATION = $_[0];
@@ -389,17 +389,18 @@ sub find_url_and_md5 ($\@) {
   my $URL = $1;
   $DATA =~ /<md5>(.*)<\/md5>/g;
   # Find the MD5 and store it just like the system program `md5sum` outputs
-  my $MD5SUM = lc $1 . '  ' . $FILE_LOCATION . "\n";
+  my $MD5SUM = lc $1;
   # Return both
   return ($URL, $MD5SUM);
 }
 
 sub validate_download ($\@) {
+  use Digest::MD5 qw( md5_hex );
   # Grab the MD5 we got from upstream, and the location of the downloaded file
   my ($GOOD_MD5, $FILE_DOWNLOAD) = @_;
   print "\nValidating installer...\n";
   # Generate the MD5 hash of the file that was downloaded
-  my $CALC_MD5 = `md5sum $FILE_DOWNLOAD`;
+  my $CALC_MD5 = md5_hex(&save_file_data($FILE_DOWNLOAD));
   if ($CALC_MD5 eq $GOOD_MD5) {
     # If the MD5 is good, save the location as our windows installer
     $YNAB_WINDOWS = $FILE_DOWNLOAD;
