@@ -150,14 +150,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
     $UPDATE_DATA =~ /<md5>(.*)<\/md5>/g;
     my $GIVEN_MD5 = lc $1 . '  ' . $DOWNLOAD_LOCATION . "\n";
     getstore($INSTALLER_URL, $DOWNLOAD_LOCATION);
-    print "\nValidating downloaded installer...\n";
-    my $CALC_MD5 = `md5sum $DOWNLOAD_LOCATION`;
-    if ($CALC_MD5 eq $GIVEN_MD5) {
-      $YNAB_WINDOWS = $DOWNLOAD_LOCATION;
-    }
-    else {
-      mydie "Could not validate downloaded file. Please try again";
-    }
+    &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
   }
 }
 
@@ -180,12 +173,12 @@ if (-s $DROPBOX_HOSTDB) {
 if ($DROPBOX_INSTALLDIR) {
   if (! -d $DROPBOX_INSTALLDIR) {
     # Dropbox setup hasn't been completed yet
-    print "Dropbox detected but not found in '$DROPBOX_INSTALLDIR'\n";
+    print "\nDropbox detected but not found in '$DROPBOX_INSTALLDIR'\n";
     $DROPBOX_INSTALLDIR = '';
   }
   else {
     # Dropbox was successfully found
-    print "Found Dropbox Installation: '$DROPBOX_INSTALLDIR'\n";
+    print "\nFound Dropbox Installation: '$DROPBOX_INSTALLDIR'\n";
   }
 }
 else {
@@ -346,5 +339,17 @@ sub recursive_find_installers ($\@) {
     if ($file =~ /^YNAB.*4.*setup.*\.exe$/i) {
       push @$found, $path;
     }
+  }
+}
+
+sub validate_download ($\@) {
+  my ($GOOD_MD5, $FILE_DOWNLOAD) = @_;
+  print "\nValidating downloaded installer...\n";
+  my $CALC_MD5 = `md5sum $FILE_DOWNLOAD`;
+  if ($CALC_MD5 eq $GOOD_MD5) {
+    $YNAB_WINDOWS = $FILE_DOWNLOAD
+  }
+  else {
+    mydie "Could not validate downloaded file. Please try again.";
   }
 }
