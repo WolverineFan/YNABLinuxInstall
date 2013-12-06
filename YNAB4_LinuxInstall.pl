@@ -40,9 +40,9 @@ my $INSTALL_MODE = 'YNAB';
 unless ($YNAB_WINDOWS && -s $YNAB_WINDOWS) {
   print <<"END_MESSAGE";
 Would you like to:
-1. Install YNAB4 from a downloaded installer and link Dropbox
+1. Install YNAB4 and link Dropbox
 2. Link Dropbox ONLY
-3. Download the latest version of YNAB4, install it, and link Dropbox
+3. Download YNAB4, install it, and link Dropbox
 END_MESSAGE
   ;
   print "Select an option: [1] ";
@@ -133,7 +133,11 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
     if (!-x $WGET) {
       my $CURL = '/usr/bin/curl';
       if (!-x $CURL) {
-        mydie "curl not found\n";
+        mydie "It looks like you don't have anything installed
+               that we can use to download the latest version of YNAB4.
+               Please download the Windows installer from here:\n\n
+               https://www.youneedabudget.com/download\n\n
+               and then try running this script with Option 1.\n";
       }
       else {
         # curl download the file
@@ -145,10 +149,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
   }
   else {
     my $UPDATE_DATA = get($UPDATE_PAGE);
-    $UPDATE_DATA =~ /<url>(.*)<\/url>/g;
-    my $INSTALLER_URL = $1;
-    $UPDATE_DATA =~ /<md5>(.*)<\/md5>/g;
-    my $GIVEN_MD5 = lc $1 . '  ' . $DOWNLOAD_LOCATION . "\n";
+    my ($INSTALLER_URL, $GIVEN_MD5) = &find_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
     getstore($INSTALLER_URL, $DOWNLOAD_LOCATION);
     &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
   }
@@ -352,4 +353,13 @@ sub validate_download ($\@) {
   else {
     mydie "Could not validate downloaded file. Please try again.";
   }
+}
+
+sub find_url_and_md5 ($\@) {
+  my ($DATA, $FILE_LOCATION) = @_;
+  $DATA =~ /<url>(.*)<\/url>/g;
+  my $URL = $1;
+  $DATA =~ /<md5>(.*)<\/md5>/g;
+  my $MD5SUM = lc $1 . '  ' . $FILE_LOCATION . "\n";
+  return ($URL, $MD5SUM);
 }
