@@ -125,26 +125,30 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
   use Digest::MD5 qw( md5 );
   print "\nDownloading the most current version of YNAB4...\n";
   my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
-  my $UPDATE_LOCATION = "/tmp/ynab4_update.xml";
   my $UPDATE_PAGE = "http://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/update.xml";
+  my $UPDATE_LOCATION = "/tmp/ynab4_update.xml";
   eval("use LWP::Simple;");
   if ($@) {
     my $WGET = '/usr/bin/wget';
-    if (!-x $WGET) {
+    if (-x $WGET) {
+      system($WGET, '-O', $UPDATE_LOCATION, $UPDATE_PAGE);
+      my $UPDATE_DATA = &save_release_notes_data($UPDATE_LOCATION);
+      my ($INSTALLER_URL, $GIVEN_MD5) = &find_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+      system($WGET, '-O', $DOWNLOAD_LOCATION, $INSTALLER_URL);
+      &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
+    }
+    else {
       my $CURL = '/usr/bin/curl';
-      if (!-x $CURL) {
+      if (-x $CURL) {
+        # curl download the file
+      }
+      else {
         mydie "It looks like you don't have anything installed
                that we can use to download the latest version of YNAB4.
                Please download the Windows installer from here:\n\n
                https://www.youneedabudget.com/download\n\n
                and then try running this script with Option 1.\n";
       }
-      else {
-        # curl download the file
-      }
-    }
-    else {
-      # wget the file
     }
   }
   else {
@@ -348,7 +352,7 @@ sub validate_download ($\@) {
   print "\nValidating downloaded installer...\n";
   my $CALC_MD5 = `md5sum $FILE_DOWNLOAD`;
   if ($CALC_MD5 eq $GOOD_MD5) {
-    $YNAB_WINDOWS = $FILE_DOWNLOAD
+    $YNAB_WINDOWS = $FILE_DOWNLOAD;
   }
   else {
     mydie "Could not validate downloaded file. Please try again.";
@@ -362,4 +366,14 @@ sub find_url_and_md5 ($\@) {
   $DATA =~ /<md5>(.*)<\/md5>/g;
   my $MD5SUM = lc $1 . '  ' . $FILE_LOCATION . "\n";
   return ($URL, $MD5SUM);
+}
+
+sub save_release_notes_data ($) {
+  local $/ = undef;
+  my $UPDATE_LOCATION = $_[0];
+  open DATA, $UPDATE_LOCATION or die "Couldn't open file: $!";
+  binmode DATA;
+  my $UPDATE_DATA = <DATA>;
+  close DATA;
+  return $UPDATE_DATA;
 }
