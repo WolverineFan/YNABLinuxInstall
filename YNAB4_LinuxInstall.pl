@@ -122,7 +122,6 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
 }
 
 if ($INSTALL_MODE eq 'DOWNLOAD') {
-  use Digest::MD5 qw( md5 );
   print "\nDownloading the most current version of YNAB4...\n";
   my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
   my $UPDATE_PAGE = "http://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/update.xml";
