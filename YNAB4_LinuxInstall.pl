@@ -389,19 +389,20 @@ sub find_url_and_md5 ($\@) {
   my $URL = $1;
   $DATA =~ /<md5>(.*)<\/md5>/g;
   # Find the MD5 and store it just like the system program `md5sum` outputs
-  my $MD5SUM = lc $1;
+  my $MD5SUM = $1;
   # Return both
   return ($URL, $MD5SUM);
 }
 
 sub validate_download ($\@) {
-  use Digest::MD5 qw( md5_hex );
+  eval("use Digest::MD5 qw( md5_hex )");
+  mydie "Validating the downloaded installer requires the Perl Digest::MD5 module to work, which you seem to be missing: $@\n" if $@;
   # Grab the MD5 we got from upstream, and the location of the downloaded file
   my ($GOOD_MD5, $FILE_DOWNLOAD) = @_;
   print "\nValidating installer...\n";
   # Generate the MD5 hash of the file that was downloaded
   my $CALC_MD5 = md5_hex(&save_file_data($FILE_DOWNLOAD));
-  if ($CALC_MD5 eq $GOOD_MD5) {
+  if (uc($CALC_MD5) eq $GOOD_MD5) {
     # If the MD5 is good, save the location as our windows installer
     $YNAB_WINDOWS = $FILE_DOWNLOAD;
   }
