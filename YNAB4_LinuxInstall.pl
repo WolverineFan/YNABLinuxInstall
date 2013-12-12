@@ -127,6 +127,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
   my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
   my $UPDATE_PAGE = "http://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/update.xml";
   my $UPDATE_LOCATION = "/tmp/ynab4_update.xml";
+  
   # Check to see if the LWP::Simple perl module is installed
   eval("use LWP::Simple;");
   if ($@) {
@@ -137,12 +138,15 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
       system($WGET, '-O', $UPDATE_LOCATION, $UPDATE_PAGE);
       my $UPDATE_DATA = &save_file_data($UPDATE_LOCATION);
       # look through the xml to find the download url and md5sum,
-      my ($INSTALLER_URL, $GIVEN_MD5) = &find_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+      my ($CURRENT_VERSION, $INSTALLER_URL, $GIVEN_MD5) = &find_version_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+      # quit if the current version is the same as the installed version
+      mydie "It looks like you already have the latest version of YNAB4 installed: $CURRENT_VERSION" unless &compare_versions($CURRENT_VERSION);
       # download the installer,
       system($WGET, '-O', $DOWNLOAD_LOCATION, $INSTALLER_URL);
       # and check to make sure that the file we downloaded matches the md5 that YNAB gave us
       &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
     }
+    
     else {
       # If wget is not installed, let's try curl
       my $CURL = '/usr/bin/curl';
@@ -151,12 +155,15 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
         system($CURL, '-o', $UPDATE_LOCATION, $UPDATE_PAGE);
         my $UPDATE_DATA = &save_file_data($UPDATE_LOCATION);
         # look through the xml to find the download url and md5sum,
-        my ($INSTALLER_URL, $GIVEN_MD5) = &find_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+        my ($CURRENT_VERSION, $INSTALLER_URL, $GIVEN_MD5) = &find_version_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+        # quit if the current version is the same as the installed version
+        mydie "It looks like you already have the latest version of YNAB4 installed: $CURRENT_VERSION" unless &compare_versions($CURRENT_VERSION);
         # download the installer,
         system($CURL, '-o', $DOWNLOAD_LOCATION, $INSTALLER_URL);
         # and check to make sure that the file we downloaded matches the md5 that YNAB gave us
         &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
       }
+      
       else {
         # If LWP::Simple, wget, and curl are all NOT installed, I don't know how
         # else we could try to download the file, ask the user to download it
@@ -169,11 +176,14 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
       }
     }
   }
+  
   else {
     # LWP::Simple is installed, let's download the update page,
     my $UPDATE_DATA = get($UPDATE_PAGE);
     # look through the xml to find the download url and md5sum,
-    my ($INSTALLER_URL, $GIVEN_MD5) = &find_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+    my ($CURRENT_VERSION, $INSTALLER_URL, $GIVEN_MD5) = &find_version_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+    # quit if the current version is the same as the installed version
+    mydie "It looks like you already have the latest version of YNAB4 installed: $CURRENT_VERSION" unless &compare_versions($CURRENT_VERSION);
     # download the installer,
     getstore($INSTALLER_URL, $DOWNLOAD_LOCATION);
     # and check to make sure that the file we downloaded matches the md5 that YNAB gave us
@@ -373,7 +383,7 @@ sub save_file_data ($) {
   local $/ = undef;
   # Get the location of the update file that was provided, and store it as DATA
   my $UPDATE_LOCATION = $_[0];
-  open DATA, $UPDATE_LOCATION or die "Couldn't open file: $!";
+  open DATA, $UPDATE_LOCATION or mydie "Couldn't open file: $!";
   binmode DATA;
   # Read from <DATA> and store it as a string: $UPDATE_DATA and return
   my $UPDATE_DATA = <DATA>;
@@ -381,17 +391,20 @@ sub save_file_data ($) {
   return $UPDATE_DATA;
 }
 
-sub find_url_and_md5 ($\@) {
+sub find_version_url_and_md5 ($\@) {
   # Get the update information and name of the download file
   my ($DATA, $FILE_LOCATION) = @_;
+  $DATA =~ /<version>(.*)<\/version>/g;
+  # Find the current version number
+  my $VERSION = $1;
   $DATA =~ /<url>(.*)<\/url>/g;
   # Find the installer URL
   my $URL = $1;
   $DATA =~ /<md5>(.*)<\/md5>/g;
-  # Find the MD5 and store it just like the system program `md5sum` outputs
+  # Find the MD5 and store it
   my $MD5SUM = $1;
   # Return both
-  return ($URL, $MD5SUM);
+  return ($VERSION, $URL, $MD5SUM);
 }
 
 sub validate_download ($\@) {
@@ -410,5 +423,29 @@ sub validate_download ($\@) {
     # Otherwise, something went wrong.
     # Quit the script and instruct the user to try again.
     mydie "Could not validate downloaded file. Please try again.";
+  }
+}
+
+sub compare_versions ($) {
+  # Pass in the current version of YNAB4 from the ynab4_update.xml file
+  my $CURRENT_VERSION = $_[0];
+  my $WINEDIR = $ENV{HOME} . "/.wine_YNAB4";
+  if (-d $WINEDIR) {
+    # If the suggested wine directory exists, check what the installed version is
+    my $APPLICATION_XML = &save_file_data(qx(find $WINEDIR -name application.xml));
+    $APPLICATION_XML =~ /<versionNumber>(.*)<\/versionNumber>/g;
+    my $INSTALLED_VERSION = $1;
+    # If the installed version is the same as the current version, return false
+    if ($INSTALLED_VERSION eq $CURRENT_VERSION) {
+      return 0;
+    }
+    # If the installed and current versions are different, return true
+    else {
+      return 1;
+    }
+  }
+  # If the suggested wine directory does not exist, return true
+  else {
+    return 1;
   }
 }
