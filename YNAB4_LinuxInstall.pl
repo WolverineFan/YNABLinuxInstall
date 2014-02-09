@@ -32,7 +32,7 @@ mydie "This script requires the Perl MIME::Base64 module to work, which you seem
 my $WINE = '/usr/bin/wine';
 mydie "\nYNAB 4 requires WINE to work, please install WINE and try again\n" unless -x $WINE;
 
-# Take a(n optional) argument to be a YNAB windows installer
+# Take an (optional) argument to be a YNAB windows installer
 my $YNAB_WINDOWS = $ARGV[0];
 my $INSTALL_MODE = 'YNAB';
 
@@ -42,6 +42,7 @@ unless ($YNAB_WINDOWS && -s $YNAB_WINDOWS) {
 Would you like to:
 1. Install YNAB4 and link Dropbox
 2. Link Dropbox ONLY
+3. Download YNAB4, install it, and link Dropbox
 END_MESSAGE
   ;
   print "Select an option: [1] ";
@@ -52,8 +53,11 @@ END_MESSAGE
   if ($num == 1) {
     $INSTALL_MODE = 'YNAB';
   }
-  else {
+  elsif ($num == 2) {
     $INSTALL_MODE = 'DROPBOX';
+  }
+  else {
+    $INSTALL_MODE = 'DOWNLOAD';
   }
 }
 
@@ -71,12 +75,13 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
                       $ENV{HOME} . "/Dropbox",
                       $ENV{HOME},
                      );
-  # search through each of the paths for an installer
+  # Search through each of the paths for an installer
   foreach my $search_path (@search_paths) {
     print "Searching in $search_path\n";
     &find_installers($search_path, \@installers);
     last if @installers;
   }
+  
   if (!@installers) {
     # If no installers are found, quit
     mydie("Unable to find YNAB4 installer\n");
@@ -116,6 +121,76 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
   mydie "\nNo YNAB4 Installer found!\n";
 }
 
+if ($INSTALL_MODE eq 'DOWNLOAD') {
+  print "\nDownloading the most current version of YNAB4...\n";
+  # Setting some variables to use through the various download options
+  my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
+  my $UPDATE_PAGE = "http://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/update.xml";
+  my $UPDATE_LOCATION = "/tmp/ynab4_update.xml";
+  
+  # Check to see if the LWP::Simple perl module is installed
+  eval("use LWP::Simple;");
+  if ($@) {
+    # If LWP::Simple is not installed, let's try wget
+    my $WGET = '/usr/bin/wget';
+    if (-x $WGET) {
+      # If wget is installed, let's download the update page,
+      system($WGET, '-O', $UPDATE_LOCATION, $UPDATE_PAGE);
+      my $UPDATE_DATA = &save_file_data($UPDATE_LOCATION);
+      # look through the xml to find the download url and md5sum,
+      my ($CURRENT_VERSION, $INSTALLER_URL, $GIVEN_MD5) = &find_version_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+      # quit if the current version is the same as the installed version
+      mydie "It looks like you already have the latest version of YNAB4 installed: $CURRENT_VERSION" unless &compare_versions($CURRENT_VERSION);
+      # download the installer,
+      system($WGET, '-O', $DOWNLOAD_LOCATION, $INSTALLER_URL);
+      # and check to make sure that the file we downloaded matches the md5 that YNAB gave us
+      &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
+    }
+    
+    else {
+      # If wget is not installed, let's try curl
+      my $CURL = '/usr/bin/curl';
+      if (-x $CURL) {
+        # If curl is installed, let's download the update page,
+        system($CURL, '-o', $UPDATE_LOCATION, $UPDATE_PAGE);
+        my $UPDATE_DATA = &save_file_data($UPDATE_LOCATION);
+        # look through the xml to find the download url and md5sum,
+        my ($CURRENT_VERSION, $INSTALLER_URL, $GIVEN_MD5) = &find_version_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+        # quit if the current version is the same as the installed version
+        mydie "It looks like you already have the latest version of YNAB4 installed: $CURRENT_VERSION" unless &compare_versions($CURRENT_VERSION);
+        # download the installer,
+        system($CURL, '-o', $DOWNLOAD_LOCATION, $INSTALLER_URL);
+        # and check to make sure that the file we downloaded matches the md5 that YNAB gave us
+        &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
+      }
+      
+      else {
+        # If LWP::Simple, wget, and curl are all NOT installed, I don't know how
+        # else we could try to download the file, ask the user to download it
+        # on their own and come back to us.
+        mydie "It looks like you don't have anything installed
+               that we can use to download the latest version of YNAB4.
+               Please download the Windows installer from here:\n\n
+               https://www.youneedabudget.com/download\n\n
+               and then try running this script with Option 1.\n";
+      }
+    }
+  }
+  
+  else {
+    # LWP::Simple is installed, let's download the update page,
+    my $UPDATE_DATA = get($UPDATE_PAGE);
+    # look through the xml to find the download url and md5sum,
+    my ($CURRENT_VERSION, $INSTALLER_URL, $GIVEN_MD5) = &find_version_url_and_md5($UPDATE_DATA, $DOWNLOAD_LOCATION);
+    # quit if the current version is the same as the installed version
+    mydie "It looks like you already have the latest version of YNAB4 installed: $CURRENT_VERSION" unless &compare_versions($CURRENT_VERSION);
+    # download the installer,
+    getstore($INSTALLER_URL, $DOWNLOAD_LOCATION);
+    # and check to make sure that the file we downloaded matches the md5 that YNAB gave us
+    &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
+  }
+}
+
 # Get started by opening the dropbox configuration
 my $DROPBOX_HOSTDB = $ENV{HOME} . "/.dropbox/host.db";
 my $DROPBOX_INSTALLDIR = "";
@@ -135,12 +210,12 @@ if (-s $DROPBOX_HOSTDB) {
 if ($DROPBOX_INSTALLDIR) {
   if (! -d $DROPBOX_INSTALLDIR) {
     # Dropbox setup hasn't been completed yet
-    print "Dropbox detected but not found in '$DROPBOX_INSTALLDIR'\n";
+    print "\nDropbox detected but not found in '$DROPBOX_INSTALLDIR'\n";
     $DROPBOX_INSTALLDIR = '';
   }
   else {
     # Dropbox was successfully found
-    print "Found Dropbox Installation: '$DROPBOX_INSTALLDIR'\n";
+    print "\nFound Dropbox Installation: '$DROPBOX_INSTALLDIR'\n";
   }
 }
 else {
@@ -195,7 +270,7 @@ $WINEDIR = $input if $input !~ /^\s*$/;
 my $WINE_DRIVEC_DIR = "$WINEDIR/drive_c";
 my $WINE_APPDATA_DIR = "$WINE_DRIVEC_DIR/users/$ENV{USER}/Application\ Data";
 
-if ($INSTALL_MODE eq 'YNAB') {
+if ($INSTALL_MODE eq 'YNAB' || $INSTALL_MODE eq 'DOWNLOAD') {
   # Create the winedir, unless it already exists
   # Might need to use $ENV{LOGNAME} here?
   system('mkdir', '-p', "$WINEDIR");
@@ -301,5 +376,76 @@ sub recursive_find_installers ($\@) {
     if ($file =~ /^YNAB.*4.*setup.*\.exe$/i) {
       push @$found, $path;
     }
+  }
+}
+
+sub save_file_data ($) {
+  local $/ = undef;
+  # Get the location of the update file that was provided, and store it as DATA
+  my $UPDATE_LOCATION = $_[0];
+  open DATA, $UPDATE_LOCATION or mydie "Couldn't open file: $!";
+  binmode DATA;
+  # Read from <DATA> and store it as a string: $UPDATE_DATA and return
+  my $UPDATE_DATA = <DATA>;
+  close DATA;
+  return $UPDATE_DATA;
+}
+
+sub find_version_url_and_md5 ($\@) {
+  # Get the update information and name of the download file
+  my ($DATA, $FILE_LOCATION) = @_;
+  $DATA =~ /<version>(.*)<\/version>/g;
+  # Find the current version number
+  my $VERSION = $1;
+  $DATA =~ /<url>(.*)<\/url>/g;
+  # Find the installer URL
+  my $URL = $1;
+  $DATA =~ /<md5>(.*)<\/md5>/g;
+  # Find the MD5 and store it
+  my $MD5SUM = $1;
+  # Return both
+  return ($VERSION, $URL, $MD5SUM);
+}
+
+sub validate_download ($\@) {
+  eval("use Digest::MD5 qw( md5_hex )");
+  mydie "Validating the downloaded installer requires the Perl Digest::MD5 module to work, which you seem to be missing: $@\n" if $@;
+  # Grab the MD5 we got from upstream, and the location of the downloaded file
+  my ($GOOD_MD5, $FILE_DOWNLOAD) = @_;
+  print "\nValidating installer...\n";
+  # Generate the MD5 hash of the file that was downloaded
+  my $CALC_MD5 = md5_hex(&save_file_data($FILE_DOWNLOAD));
+  if (uc($CALC_MD5) eq $GOOD_MD5) {
+    # If the MD5 is good, save the location as our windows installer
+    $YNAB_WINDOWS = $FILE_DOWNLOAD;
+  }
+  else {
+    # Otherwise, something went wrong.
+    # Quit the script and instruct the user to try again.
+    mydie "Could not validate downloaded file. Please try again.";
+  }
+}
+
+sub compare_versions ($) {
+  # Pass in the current version of YNAB4 from the ynab4_update.xml file
+  my $CURRENT_VERSION = $_[0];
+  my $WINEDIR = $ENV{HOME} . "/.wine_YNAB4";
+  if (-d $WINEDIR) {
+    # If the suggested wine directory exists, check what the installed version is
+    my $APPLICATION_XML = &save_file_data(qx(find $WINEDIR -name application.xml));
+    $APPLICATION_XML =~ /<versionNumber>(.*)<\/versionNumber>/g;
+    my $INSTALLED_VERSION = $1;
+    # If the installed version is the same as the current version, return false
+    if ($INSTALLED_VERSION eq $CURRENT_VERSION) {
+      return 0;
+    }
+    # If the installed and current versions are different, return true
+    else {
+      return 1;
+    }
+  }
+  # If the suggested wine directory does not exist, return true
+  else {
+    return 1;
   }
 }
