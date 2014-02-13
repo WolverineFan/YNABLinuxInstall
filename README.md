@@ -8,9 +8,9 @@ First, a quick explanation: YNAB4 works fine in most modern distros that have WI
 You will need:
 
 1. WINE
-2. Dropbox for Linux. I'm going to plug my Dropbox referral link here: http://db.tt/qTBkvl1b (we both get an extra 500MB if you use it)
-3. The YNAB4 Windows installer: http://www.youneedabudget.com/download/ynab/redownload/
-4. My script: https://github.com/WolverineFan/YNABLinuxInstall
+2. Dropbox for Linux. I'm going to plug a Dropbox referral link here: https://db.tt/WmZzCcSX (both parties get an extra 500MB if you use it)
+3. My script: https://github.com/WolverineFan/YNABLinuxInstall
+4. OPTIONAL: The YNAB4 Windows installer: http://www.youneedabudget.com/download/ynab/redownload/ (the script will download it for you if you want)
 
 If you want to use wget to download my script, try this:
 
