@@ -88,12 +88,12 @@ The newest version of the script is much more friendly. It will:
 > home directory after it's done.
 
 2. In a Terminal window you will type something like the following:
-> :information_source: NOTE: You may need to adjust `cd Downloads`, if
+> :information_source: NOTE: You may need to adjust `cd ~/Downloads`, if
 > the install script is located in another directory. `~/Downloads` is the
 > default directory, most of the time.
 
     ```
-    cd Downloads
+    cd ~/Downloads
     perl ./YNAB4_LinuxInstall.pl
     ```
 
