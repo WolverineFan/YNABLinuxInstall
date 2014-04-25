@@ -17,13 +17,12 @@ should still sync just fine. So this script is a convenience, not mandatory.
 Table of Contents
 -----------------
 
-[What Will this Script Do?](#about)
+[What Will this Script Do?](#what-will-this-script-do)
 
 [Dependencies](#dependencies)
 
-[Installation Instructions](#install)
+[Installation Instructions](#installation-instructions)
 
-<a name="about"/>
 What Will this Script Do?
 -------------------------
 
@@ -39,7 +38,6 @@ The newest version of the script is much more friendly. It will:
 * Download the latest and greatest version of YNAB4 from youneedabudget.com
   so that you won't have to worry about doing that in advance!
 
-<a name="dependencies"/>
 Dependencies
 ------------
 
@@ -53,7 +51,6 @@ Dependencies
 4. OPTIONAL: [The YNAB4 Windows installer](http://www.youneedabudget.com/download/ynab4)
    (the script will download the installer for you, if you want)
 
-<a name="install"/>
 Installation Instructions
 -------------------------
 
