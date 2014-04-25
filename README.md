@@ -1,4 +1,4 @@
-#YNABLinuxInstall
+# YNABLinuxInstall #
 
 Install script for YNAB 4 on Linux.  It is released to the public domain.
 
@@ -13,14 +13,14 @@ doesn't see Dropbox and doesn't enable the Cloud Sync option, if you manually
 browse to your Linux Dropbox folder and store your YNAB4 files there, they
 should still sync just fine. So this script is a convenience, not mandatory.
 
-##Table of Contents
+## Table of Contents ##
 
 - [What Will this Script Do?](#what-will-this-script-do)
 - [What You will Need](#what-you-will-need)
   - [Optional Dependencies](#optional-dependencies)
 - [Installation Instructions](#installation-instructions)
 
-##What Will this Script Do?
+## What Will this Script Do? ##
 
 The newest version of the script is much more friendly. It will:
 
@@ -34,7 +34,7 @@ The newest version of the script is much more friendly. It will:
 * Download the latest and greatest version of YNAB4 from youneedabudget.com
   so that you don't have to worry about doing that in advance!
 
-##What You will Need
+## What You will Need ##
 
 1. [WINE](http://www.winehq.org)
 2. Dropbox for Linux. I'm going to plug a Dropbox referral link here:
@@ -47,7 +47,7 @@ The newest version of the script is much more friendly. It will:
         ```
   - Alternatively, in your browser, [right-click this link and "Save Link As..."](https://raw.github.com/WolverineFan/YNABLinuxInstall/master/YNAB4_LinuxInstall.pl)
 
-###Optional Dependencies
+### Optional Dependencies ###
 
 > :information_source: Some of these are optional, and some of these are
 > known to be necessary under some circumstances Your mileage may vary.
@@ -83,7 +83,7 @@ The newest version of the script is much more friendly. It will:
      or configuration.
      
 
-##Installation Instructions
+## Installation Instructions ##
 
 1. Install WINE and Dropbox first.
 > :information_source: NOTE: Be sure to launch Dropbox, register, and
