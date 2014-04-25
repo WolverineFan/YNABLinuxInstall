@@ -40,8 +40,11 @@ The newest version of the script is much more friendly. It will:
 2. Dropbox for Linux. I'm going to plug a Dropbox referral link here:
    https://db.tt/WmZzCcSX (both parties get an extra 500MB if you use it)
 3. [My script](https://github.com/WolverineFan/YNABLinuxInstall)
-  - If you want to use `wget` to download my script, try this:  
-        `wget -O YNAB4_LinuxInstall.pl https://raw.github.com/WolverineFan/YNABLinuxInstall/master/YNAB4_LinuxInstall.pl`
+  - If you want to use `wget` to download my script, try this:
+
+        ```
+        wget -O YNAB4_LinuxInstall.pl https://raw.github.com/WolverineFan/YNABLinuxInstall/master/YNAB4_LinuxInstall.pl
+        ```
   - Alternatively, in your browser, [right-click this link and "Save Link As..."](https://raw.github.com/WolverineFan/YNABLinuxInstall/master/YNAB4_LinuxInstall.pl)
 
 ###Optional Dependencies
