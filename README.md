@@ -72,7 +72,7 @@ The newest version of the script is much more friendly. It will:
    - Please see this [YNAB forum post](http://forum.youneedabudget.com/discussion/comment/269035/#Comment_269035)
      for some relevant discussion.
 
-4. Users of Debian Linux have reported that [libwine-cms](https://packages.debian.org/squeeze/libwine-cms)
+4. Some users of Debian Linux have reported that [libwine-cms](https://packages.debian.org/squeeze/libwine-cms)
    is a required dependency.
 
 5. [Winetricks](http://wiki.winehq.org/winetricks) can add some bells and
