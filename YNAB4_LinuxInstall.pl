@@ -429,10 +429,18 @@ sub validate_download ($\@) {
 sub compare_versions ($) {
   # Pass in the current version of YNAB4 from the ynab4_update.xml file
   my $CURRENT_VERSION = $_[0];
+  my $APPLICATION_XML;
   my $WINEDIR = $ENV{HOME} . "/.wine_YNAB4";
   if (-d $WINEDIR) {
     # If the suggested wine directory exists, check what the installed version is
-    my $APPLICATION_XML = &save_file_data(qx(find $WINEDIR -name application.xml));
+    if (!qx(find $WINEDIR -name application.xml)) {
+      mydie "Wine directory exists. Could not confirm installed version of YNAB4.\n
+Please ensure that YNAB4 is actually installed. If a previous version of\n
+YNAB4 failed to install please move or delete the ~/.wine_YNAB4 directory.\n";
+    }
+    else {
+      $APPLICATION_XML = &save_file_data(qx(find $WINEDIR -name application.xml));
+    }
     $APPLICATION_XML =~ /<versionNumber>(.*)<\/versionNumber>/g;
     my $INSTALLED_VERSION = $1;
     # If the installed version is the same as the current version, return false
