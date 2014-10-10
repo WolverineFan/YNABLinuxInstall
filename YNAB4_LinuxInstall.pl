@@ -11,6 +11,7 @@ use warnings;
 # 2012-06-30 - 0.5 - Added support for linking Dropbox only, upgrading
 #                    versions, and automatically searching for installers
 # 2012-07-04 - 0.6 - Look for YNAB installer in . too
+# 2014-02-09 - 0.7 - Automatically download the YNAB4 installer
 #
 ##############################################################################
 
