@@ -437,7 +437,7 @@ sub compare_versions ($) {
     if (!qx(find $WINEDIR -name application.xml)) {
       mydie "Wine directory exists. Could not confirm installed version of YNAB4.\n
 Please ensure that YNAB4 is actually installed. If a previous version of\n
-YNAB4 failed to install please move or delete the ~/.wine_YNAB4 directory.\n";
+YNAB4 failed to install, please move or delete the $WINEDIR directory.\n";
     }
     else {
       $APPLICATION_XML = &save_file_data(qx(find $WINEDIR -name application.xml));
