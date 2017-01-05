@@ -82,7 +82,7 @@ if ($INSTALL_MODE eq 'YNAB' && (!$YNAB_WINDOWS || !-s $YNAB_WINDOWS)) {
     &find_installers($search_path, \@installers);
     last if @installers;
   }
-  
+
   if (!@installers) {
     # If no installers are found, quit
     mydie("Unable to find YNAB4 installer\n");
@@ -128,7 +128,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
   my $DOWNLOAD_LOCATION = "/tmp/ynab4_installer.exe";
   my $UPDATE_PAGE = "http://www.youneedabudget.com/dev/ynab4/liveCaptive/Win/update.xml";
   my $UPDATE_LOCATION = "/tmp/ynab4_update.xml";
-  
+
   # Check to see if the LWP::Simple perl module is installed
   eval("use LWP::Simple;");
   if ($@) {
@@ -147,7 +147,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
       # and check to make sure that the file we downloaded matches the md5 that YNAB gave us
       &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
     }
-    
+
     else {
       # If wget is not installed, let's try curl
       my $CURL = '/usr/bin/curl';
@@ -164,7 +164,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
         # and check to make sure that the file we downloaded matches the md5 that YNAB gave us
         &validate_download($GIVEN_MD5, $DOWNLOAD_LOCATION);
       }
-      
+
       else {
         # If LWP::Simple, wget, and curl are all NOT installed, I don't know how
         # else we could try to download the file, ask the user to download it
@@ -177,7 +177,7 @@ if ($INSTALL_MODE eq 'DOWNLOAD') {
       }
     }
   }
-  
+
   else {
     # LWP::Simple is installed, let's download the update page,
     my $UPDATE_DATA = get($UPDATE_PAGE);
@@ -222,11 +222,11 @@ if ($DROPBOX_INSTALLDIR) {
 else {
   if ($INSTALL_MODE eq 'DROPBOX') {
     print <<"END_MESSAGE";
-No Dropbox installation found.  
+No Dropbox installation found.
 
-To complete the Dropbox installation, start Dropbox, 
-register, select a plan, and optionally view the tutorial.  
-When you have a "Dropbox" folder in your home directory, 
+To complete the Dropbox installation, start Dropbox,
+register, select a plan, and optionally view the tutorial.
+When you have a "Dropbox" folder in your home directory,
 setup is complete.
 
 END_MESSAGE
@@ -235,19 +235,19 @@ END_MESSAGE
   }
 
   print <<"END_MESSAGE";
-No Dropbox installation found.  
+No Dropbox installation found.
 
-Cloud Sync will still work, but you will have to navigate 
-to the Z: drive and save your budget file in the correct 
+Cloud Sync will still work, but you will have to navigate
+to the Z: drive and save your budget file in the correct
 location.
 
-If you want this script to create the Dropbox link for 
-YNAB4, you will need to complete the Dropbox installation 
+If you want this script to create the Dropbox link for
+YNAB4, you will need to complete the Dropbox installation
 and restart the script.
 
-To complete the Dropbox installation, start Dropbox, 
-register, select a plan, and optionally view the tutorial.  
-When you have a "Dropbox" folder in your home directory, 
+To complete the Dropbox installation, start Dropbox,
+register, select a plan, and optionally view the tutorial.
+When you have a "Dropbox" folder in your home directory,
 setup is complete.
 
 NOTE: You can install YNAB4 now and re-run the script later
@@ -360,7 +360,7 @@ sub recursive_find_installers ($\@) {
   my @files = readdir DIR;
   closedir DIR;
 
-  
+
   foreach my $file (sort @files) {
     # Don't even think about those pesky hidden files
     next if $file =~ /^\./;
@@ -437,7 +437,7 @@ sub compare_versions ($) {
     if (!qx(find $WINEDIR -name application.xml)) {
       mydie "Wine directory exists. Could not confirm installed version of YNAB4.\n
 Please ensure that YNAB4 is actually installed. If a previous version of\n
-YNAB4 failed to install please move or delete the ~/.wine_YNAB4 directory.\n";
+YNAB4 failed to install, please move or delete the $WINEDIR directory.\n";
     }
     else {
       $APPLICATION_XML = &save_file_data(qx(find $WINEDIR -name application.xml));
