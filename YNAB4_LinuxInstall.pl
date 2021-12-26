@@ -269,7 +269,7 @@ my $input = <STDIN>;
 chomp $input;
 $WINEDIR = $input if $input !~ /^\s*$/;
 my $WINE_DRIVEC_DIR = "$WINEDIR/drive_c";
-my $WINE_APPDATA_DIR = "$WINE_DRIVEC_DIR/users/$ENV{USER}/Application\ Data";
+my $WINE_APPDATA_DIR = "$WINE_DRIVEC_DIR/users/$ENV{USER}/AppData/Roaming";
 
 if ($INSTALL_MODE eq 'YNAB' || $INSTALL_MODE eq 'DOWNLOAD') {
   # Create the winedir, unless it already exists
